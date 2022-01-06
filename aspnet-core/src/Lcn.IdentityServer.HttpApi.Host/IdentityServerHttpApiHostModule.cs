@@ -128,7 +128,12 @@ namespace Lcn.IdentityServer
                         ServerCertificateCustomValidationCallback =
                             HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
                     };
+                    
                 });
+
+            //context.Services.AddAuthorization(options => { 
+            //options.AddPolicy
+            //});
         }
 
         private static void ConfigureSwaggerServices(ServiceConfigurationContext context, IConfiguration configuration)

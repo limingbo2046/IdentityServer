@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using IdentityServer4.Models;
 using Microsoft.Extensions.Configuration;
@@ -66,6 +67,8 @@ namespace Lcn.IdentityServer.IdentityServer
         private async Task CreateApiScopesAsync()
         {
             await CreateApiScopeAsync("IdentityServer");
+
+            await CreateApiScopeAsync("gdzy_mes_server");
         }
 
         private async Task CreateApiResourcesAsync()
@@ -81,6 +84,9 @@ namespace Lcn.IdentityServer.IdentityServer
             };
 
             await CreateApiResourceAsync("IdentityServer", commonApiUserClaims);
+
+            await CreateApiResourceAsync("gdzy_mes_server", commonApiUserClaims);
+
         }
 
         private async Task<ApiResource> CreateApiResourceAsync(string name, IEnumerable<string> claims)
@@ -160,9 +166,9 @@ namespace Lcn.IdentityServer.IdentityServer
                     corsOrigins: new[] { webClientRootUrl.RemovePostFix("/") }
                 );
             }
-            
-            
-            
+
+
+
             // Swagger Client
             var swaggerClientId = configurationSection["IdentityServer_Swagger:ClientId"];
             if (!swaggerClientId.IsNullOrWhiteSpace())
@@ -179,6 +185,18 @@ namespace Lcn.IdentityServer.IdentityServer
                     corsOrigins: new[] { swaggerRootUrl.RemovePostFix("/") }
                 );
             }
+
+
+            //gdzy_mes_server
+
+            await CreateClientAsync(
+                name: "gdzy_mes_client",
+                scopes: commonScopes.Union(new[] { "gdzy_mes_server" }),
+                 grantTypes: new[] { "password", "client_credentials" },
+                    secret: (configurationSection["IdentityServer_App:ClientSecret"] ?? "1q2w3e*").Sha256(),
+                    requireClientSecret: true
+                );
+
         }
 
         private async Task<Client> CreateClientAsync(
