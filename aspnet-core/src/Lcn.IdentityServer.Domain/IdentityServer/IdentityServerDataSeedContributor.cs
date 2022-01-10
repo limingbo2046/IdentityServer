@@ -186,16 +186,23 @@ namespace Lcn.IdentityServer.IdentityServer
                 );
             }
 
-
-            //gdzy_mes_server
-
-            await CreateClientAsync(
-                name: "gdzy_mes_client",
-                scopes: commonScopes.Union(new[] { "gdzy_mes_server" }),
-                 grantTypes: new[] { "password", "client_credentials" },
-                    secret: (configurationSection["IdentityServer_App:ClientSecret"] ?? "1q2w3e*").Sha256(),
-                    requireClientSecret: true
+            var My_App1 = configurationSection["My_App1:ClientId"];
+            if (!My_App1.IsNullOrWhiteSpace())
+            {
+                var webClientRootUrl = configurationSection["My_App1:RootUrl"]?.TrimEnd('/');
+                var scopes = configurationSection["My_App1:Scopes"];
+                await CreateClientAsync(
+                    name: My_App1,
+                    scopes: commonScopes.Union(new[] { scopes }),
+                    grantTypes: new[] { "password", "client_credentials", "authorization_code" },
+                    secret: (configurationSection["My_App1:ClientSecret"] ?? "1q2w3e*").Sha256(),
+                    requireClientSecret: false,
+                    redirectUri: webClientRootUrl,
+                    postLogoutRedirectUri: webClientRootUrl,
+                    corsOrigins: new[] { webClientRootUrl.RemovePostFix("/") }
                 );
+            }
+
 
         }
 
