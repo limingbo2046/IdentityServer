@@ -55,23 +55,50 @@ namespace Lcn.IdentityServer.IdentityServer
         [UnitOfWork]
         public virtual async Task SeedAsync(DataSeedContext context)
         {
+            var commonScopes = new[]
+           {
+                "email",
+                "openid",
+                "profile",
+                "role",
+                "phone",
+                "address"
+            };
+
             using (_currentTenant.Change(context?.TenantId))
             {
                 await _identityResourceDataSeeder.CreateStandardResourcesAsync();
-                await CreateApiResourcesAsync();
-                await CreateApiScopesAsync();
-                await CreateClientsAsync();
+                var configurationSection = _configuration.GetSection("IdentityServer:Clients");
+                var clients = configurationSection.GetChildren();
+
+                foreach (var c in clients)
+                {
+                    var _ClientId = c["ClientId"];
+                    var _ClientSecret = c["ClientSecret"];
+                    var webClientRootUrl = c["RootUrl"]?.TrimEnd('/');
+                    var redirectUri = c["RedirectUri"];
+                    var requireClientSecret = c["RequireClientSecret"].IsNullOrWhiteSpace() ? false : true;
+                    var scopes = c["Scopes"] ?? _ClientId;
+                    var apiScope = c["ApiScope"] ?? _ClientId;//如果没有配置API的范围，则默认使用客户端
+                    await CreateApiResourcesAsync(_ClientId);
+                    await CreateApiScopeAsync(apiScope);
+
+                    await CreateClientAsync(
+                          name: _ClientId,
+                          scopes: commonScopes.Union(scopes.Split(" ", StringSplitOptions.RemoveEmptyEntries)),
+                          grantTypes: new[] { "password", "client_credentials", "authorization_code" },
+                          secret: (_ClientSecret ?? "1q2w3e*").Sha256(),
+                          requireClientSecret: requireClientSecret,
+                          redirectUri: redirectUri,
+                          postLogoutRedirectUri: webClientRootUrl,
+                          corsOrigins: new[] { webClientRootUrl.RemovePostFix("/") }
+                                             );
+
+                }
             }
         }
 
-        private async Task CreateApiScopesAsync()
-        {
-            await CreateApiScopeAsync("IdentityServer");
-
-            await CreateApiScopeAsync("gdzy_mes_server");
-        }
-
-        private async Task CreateApiResourcesAsync()
+        private async Task CreateApiResourcesAsync(string clientId)
         {
             var commonApiUserClaims = new[]
             {
@@ -82,10 +109,7 @@ namespace Lcn.IdentityServer.IdentityServer
                 "phone_number_verified",
                 "role"
             };
-
-            await CreateApiResourceAsync("IdentityServer", commonApiUserClaims);
-
-            await CreateApiResourceAsync("gdzy_mes_server", commonApiUserClaims);
+            await CreateApiResourceAsync(clientId, commonApiUserClaims);
 
         }
 
@@ -131,79 +155,6 @@ namespace Lcn.IdentityServer.IdentityServer
             }
 
             return apiScope;
-        }
-
-        private async Task CreateClientsAsync()
-        {
-            var commonScopes = new[]
-            {
-                "email",
-                "openid",
-                "profile",
-                "role",
-                "phone",
-                "address",
-                "IdentityServer"
-            };
-
-            var configurationSection = _configuration.GetSection("IdentityServer:Clients");
-
-
-            //Console Test / Angular Client
-            var consoleAndAngularClientId = configurationSection["IdentityServer_App:ClientId"];
-            if (!consoleAndAngularClientId.IsNullOrWhiteSpace())
-            {
-                var webClientRootUrl = configurationSection["IdentityServer_App:RootUrl"]?.TrimEnd('/');
-
-                await CreateClientAsync(
-                    name: consoleAndAngularClientId,
-                    scopes: commonScopes,
-                    grantTypes: new[] { "password", "client_credentials", "authorization_code" },
-                    secret: (configurationSection["IdentityServer_App:ClientSecret"] ?? "1q2w3e*").Sha256(),
-                    requireClientSecret: false,
-                    redirectUri: webClientRootUrl,
-                    postLogoutRedirectUri: webClientRootUrl,
-                    corsOrigins: new[] { webClientRootUrl.RemovePostFix("/") }
-                );
-            }
-
-
-
-            // Swagger Client
-            var swaggerClientId = configurationSection["IdentityServer_Swagger:ClientId"];
-            if (!swaggerClientId.IsNullOrWhiteSpace())
-            {
-                var swaggerRootUrl = configurationSection["IdentityServer_Swagger:RootUrl"].TrimEnd('/');
-
-                await CreateClientAsync(
-                    name: swaggerClientId,
-                    scopes: commonScopes,
-                    grantTypes: new[] { "authorization_code" },
-                    secret: configurationSection["IdentityServer_Swagger:ClientSecret"]?.Sha256(),
-                    requireClientSecret: false,
-                    redirectUri: $"{swaggerRootUrl}/swagger/oauth2-redirect.html",
-                    corsOrigins: new[] { swaggerRootUrl.RemovePostFix("/") }
-                );
-            }
-
-            var My_App1 = configurationSection["My_App1:ClientId"];
-            if (!My_App1.IsNullOrWhiteSpace())
-            {
-                var webClientRootUrl = configurationSection["My_App1:RootUrl"]?.TrimEnd('/');
-                var scopes = configurationSection["My_App1:Scopes"];
-                await CreateClientAsync(
-                    name: My_App1,
-                    scopes: commonScopes.Union(new[] { scopes }),
-                    grantTypes: new[] { "password", "client_credentials", "authorization_code" },
-                    secret: (configurationSection["My_App1:ClientSecret"] ?? "1q2w3e*").Sha256(),
-                    requireClientSecret: false,
-                    redirectUri: webClientRootUrl,
-                    postLogoutRedirectUri: webClientRootUrl,
-                    corsOrigins: new[] { webClientRootUrl.RemovePostFix("/") }
-                );
-            }
-
-
         }
 
         private async Task<Client> CreateClientAsync(
