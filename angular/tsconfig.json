@@ -1,27 +1,15 @@
-/* To learn more about this file see: https://angular.io/config/tsconfig. */
 {
-  "compileOnSave": false,
+  "extends": "./tsconfig.prod.json",
   "compilerOptions": {
-    "baseUrl": "./",
-    "outDir": "./dist/out-tsc",
-    "sourceMap": true,
-    "declaration": false,
-    "downlevelIteration": true,
-    "experimentalDecorators": true,
-    "moduleResolution": "node",
-    "importHelpers": true,
-    "target": "es2017",
-    "module": "es2020",
-    "lib": [
-      "es2018",
-      "dom"
-    ],
     "paths": {
-      "@proxy": ["src/app/proxy/index.ts"],
-      "@proxy/*": ["src/app/proxy/*"]
+      "@lcn/identity-server": [
+        "projects/identity-server/src/public-api.ts"
+      ],
+      "@lcn/identity-server/config": [
+        "projects/identity-server/config/src/public-api.ts"
+      ],
+      "@proxy": ["projects/identity-server/src/lib/proxy/index.ts"],
+      "@proxy/*": ["projects/identity-server/src/lib/proxy/*"]
     }
-  },
-  "angularCompilerOptions": {
-    "enableI18nLegacyMessageIdFormat": false
   }
 }

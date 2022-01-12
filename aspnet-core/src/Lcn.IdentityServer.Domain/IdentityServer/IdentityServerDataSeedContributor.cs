@@ -76,7 +76,7 @@ namespace Lcn.IdentityServer.IdentityServer
                     var _ClientId = c["ClientId"];
                     var _ClientSecret = c["ClientSecret"];
                     var webClientRootUrl = c["RootUrl"]?.TrimEnd('/');
-                    var redirectUri = c["RedirectUri"];
+                    var redirectUri = c["RedirectUri"]?.TrimEnd('/');
                     var requireClientSecret = c["RequireClientSecret"].IsNullOrWhiteSpace() ? false : true;
                     var scopes = c["Scopes"] ?? _ClientId;
                     var apiScope = c["ApiScope"] ?? _ClientId;//如果没有配置API的范围，则默认使用客户端
