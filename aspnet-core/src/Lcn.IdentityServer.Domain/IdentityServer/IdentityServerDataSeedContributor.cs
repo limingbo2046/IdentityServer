@@ -82,16 +82,16 @@ namespace Lcn.IdentityServer.IdentityServer
                     var apiScope = c["ApiScope"] ?? _ClientId;//如果没有配置API的范围，则默认使用客户端
                     await CreateApiResourcesAsync(_ClientId);
                     await CreateApiScopeAsync(apiScope);
-
+                    var grantTypes = c["GrantTypes"] ?? "password client_credentials authorization_code";
                     await CreateClientAsync(
                           name: _ClientId,
-                          scopes: commonScopes.Union(scopes.Split(" ", StringSplitOptions.RemoveEmptyEntries)),
-                          grantTypes: new[] { "password", "client_credentials", "authorization_code" },
-                          secret: (_ClientSecret ?? "1q2w3e*").Sha256(),
-                          requireClientSecret: requireClientSecret,
-                          redirectUri: redirectUri,
-                          postLogoutRedirectUri: webClientRootUrl,
-                          corsOrigins: new[] { webClientRootUrl.RemovePostFix("/") }
+                          scopes: commonScopes.Union(scopes.Split(" ", StringSplitOptions.RemoveEmptyEntries)),//可访问范围
+                          grantTypes: grantTypes.Split(" ", StringSplitOptions.RemoveEmptyEntries),//可用授权类型
+                          secret: (_ClientSecret ?? "1q2w3e*").Sha256(),//密码
+                          requireClientSecret: requireClientSecret,//要求密钥
+                          redirectUri: redirectUri,//回调连接
+                          postLogoutRedirectUri: webClientRootUrl,//登出连接
+                          corsOrigins: new[] { webClientRootUrl.RemovePostFix("/") }//跨域调用
                                              );
 
                 }
