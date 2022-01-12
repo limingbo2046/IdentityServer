@@ -3,7 +3,7 @@
   <Import Project="..\..\common.props" />
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFramework>netstandard2.1</TargetFramework>
     <RootNamespace>Lcn.IdentityServer</RootNamespace>
   </PropertyGroup>
 
@@ -12,6 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="lcn.menu_management.Application.Contracts" Version="2022.1.13" />
     <PackageReference Include="Volo.Abp.ObjectExtending" Version="4.4.4" />
     <PackageReference Include="Volo.Abp.Account.Application.Contracts" Version="4.4.4" />
     <PackageReference Include="Volo.Abp.Identity.Application.Contracts" Version="4.4.4" />

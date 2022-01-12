@@ -12,6 +12,7 @@ using Volo.Abp.PermissionManagement.EntityFrameworkCore;
 using Volo.Abp.SettingManagement.EntityFrameworkCore;
 using Volo.Abp.TenantManagement;
 using Volo.Abp.TenantManagement.EntityFrameworkCore;
+using lcn.menu_management.EntityFrameworkCore;
 
 namespace Lcn.IdentityServer.EntityFrameworkCore
 {
@@ -81,6 +82,8 @@ namespace Lcn.IdentityServer.EntityFrameworkCore
             //    b.ConfigureByConvention(); //auto configure for the base class props
             //    //...
             //});
+
+            builder.Configuremenu_management();//菜单
         }
     }
 }

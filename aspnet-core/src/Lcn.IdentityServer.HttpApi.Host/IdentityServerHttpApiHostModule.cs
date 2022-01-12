@@ -112,6 +112,7 @@ namespace Lcn.IdentityServer
             Configure<AbpAspNetCoreMvcOptions>(options =>
             {
                 options.ConventionalControllers.Create(typeof(IdentityServerApplicationModule).Assembly);
+                //options.ConventionalControllers.Create(typeof(lcn.menu_management.menu_managementApplicationModule).Assembly);
             });
         }
 

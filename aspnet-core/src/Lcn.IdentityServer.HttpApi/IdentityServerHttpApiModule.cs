@@ -20,6 +20,7 @@ namespace Lcn.IdentityServer
         typeof(AbpFeatureManagementHttpApiModule),
         typeof(AbpSettingManagementHttpApiModule)
         )]
+    [DependsOn(typeof(lcn.menu_management.menu_managementHttpApiModule))]
     public class IdentityServerHttpApiModule : AbpModule
     {
         public override void ConfigureServices(ServiceConfigurationContext context)

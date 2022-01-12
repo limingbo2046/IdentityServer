@@ -19,6 +19,7 @@ namespace Lcn.IdentityServer
         typeof(AbpTenantManagementApplicationContractsModule),
         typeof(AbpObjectExtendingModule)
     )]
+    [DependsOn(typeof(lcn.menu_management.menu_managementApplicationContractsModule))]
     public class IdentityServerApplicationContractsModule : AbpModule
     {
         public override void PreConfigureServices(ServiceConfigurationContext context)

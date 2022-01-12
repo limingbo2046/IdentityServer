@@ -25,6 +25,7 @@ namespace Lcn.IdentityServer.EntityFrameworkCore
         typeof(AbpTenantManagementEntityFrameworkCoreModule),
         typeof(AbpFeatureManagementEntityFrameworkCoreModule)
         )]
+    [DependsOn(typeof(lcn.menu_management.EntityFrameworkCore.menu_managementEntityFrameworkCoreModule))]
     public class IdentityServerEntityFrameworkCoreModule : AbpModule
     {
         public override void PreConfigureServices(ServiceConfigurationContext context)
