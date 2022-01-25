@@ -1,3 +1,3 @@
 export const enum eIdentityServerRouteNames {
-  IdentityServer = 'IdentityServer',
+  IdentityServer = '认证授权管理',
 }

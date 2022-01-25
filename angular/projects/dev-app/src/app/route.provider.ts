@@ -15,7 +15,7 @@ function configureRoutes(routesService: RoutesService) {
     routesService.add([
       {
         path: '/',
-        name: 'Home',
+        name: '主页',
         iconClass: 'fas fa-home',
         order: 1,
         layout: eLayoutType.application,

@@ -8,9 +8,12 @@ using System.Threading.Tasks;
 using Volo.Abp;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Identity;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Lcn.IdentityServer.UserAuths
 {
+
     public class UserAuthAppService : IdentityServerAppService, IUserAuthAppService
     {
         private readonly IdentityUserManager _userManager;
@@ -61,7 +64,7 @@ namespace Lcn.IdentityServer.UserAuths
             //    throw new UserFriendlyException($"您没有访问任何api资源的权限！");
             //}
 
-            accessToken = await RequestTokenWithUserAsync(user.UserName, userTokenDto.UserPassword, userTokenDto.ApiScopes);
+            accessToken = await RequestTokenWithUserAsync(user.UserName, userTokenDto.UserPassword, userTokenDto.ApiScopes, userTokenDto.TenantId);
 
             return accessToken;
 
@@ -94,7 +97,7 @@ namespace Lcn.IdentityServer.UserAuths
             //    throw new UserFriendlyException($"您没有访问任何api资源的权限！");
             //}
 
-            accessToken = await RequestTokenAsync(user.UserName, userTokenDto.UserPassword, userTokenDto.ApiScopes);
+            accessToken = await RequestTokenAsync(user.UserName, userTokenDto.UserPassword, userTokenDto.ApiScopes, userTokenDto.TenantId);
 
             return accessToken;
 
@@ -130,7 +133,7 @@ namespace Lcn.IdentityServer.UserAuths
 
         }
 
-        protected async Task<string> RequestTokenAsync(string username, string password, string apiScope)
+        protected async Task<string> RequestTokenAsync(string username, string password, string apiScope, Guid? tenantId)
         {
             var authServer = Configuration.GetSection("AuthServer");
             if (authServer == null)
@@ -141,7 +144,7 @@ namespace Lcn.IdentityServer.UserAuths
             }
             string authority = authServer["Authority"];
 
-            var client = GetHttpClient(authority);
+            var client = GetHttpClient(authority, tenantId);
             var disco = await client.GetDiscoveryDocumentAsync();//请求服务端口https://localhost:9009/.well-known/openid-configuration
 
             if (disco.IsError)
@@ -176,7 +179,7 @@ namespace Lcn.IdentityServer.UserAuths
 
         }
 
-        protected async Task<string> RequestTokenWithUserAsync(string username, string password, string apiScope)
+        protected async Task<string> RequestTokenWithUserAsync(string username, string password, string apiScope, Guid? tenantId)
         {
             var authServer = Configuration.GetSection("AuthServer");
             if (authServer == null)
@@ -187,7 +190,7 @@ namespace Lcn.IdentityServer.UserAuths
             }
             string authority = authServer["Authority"];
 
-            var client = GetHttpClient(authority);
+            var client = GetHttpClient(authority, tenantId);
             var disco = await client.GetDiscoveryDocumentAsync();//请求服务端口https://localhost:9009/.well-known/openid-configuration
 
             if (disco.IsError)
@@ -219,7 +222,7 @@ namespace Lcn.IdentityServer.UserAuths
             }
             string raw = response.Raw;//未加密
             //TODO 这里是拿令牌访问用户信息而已，令牌的认证方式已经固定了。
-            client = GetHttpClient(authority, response.AccessToken);
+            client = GetHttpClient(authority, tenantId, response.AccessToken);
 
             var usercache = await client.GetUserInfoAsync(new UserInfoRequest
             {
@@ -238,7 +241,7 @@ namespace Lcn.IdentityServer.UserAuths
 
         }
 
-        protected HttpClient GetHttpClient(string authority, string bearer = null)
+        protected HttpClient GetHttpClient(string authority, Guid? tenantId, string bearer = null)
         {
             var clientHandler = new HttpClientHandler()//ABP的client模块没有这个，用的是厂家创建的
             {
@@ -247,6 +250,7 @@ namespace Lcn.IdentityServer.UserAuths
 
             var client = new HttpClient(clientHandler);
             client.BaseAddress = new Uri(authority);
+            client.DefaultRequestHeaders.Add("__tenant", tenantId.HasValue ? tenantId.Value.ToString() : "");//在请求头里面添加租户标识则会区分租户来登录账号，并拿到令牌
             if (!string.IsNullOrWhiteSpace(bearer))
             {
                 client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", bearer);
@@ -255,5 +259,14 @@ namespace Lcn.IdentityServer.UserAuths
 
         }
 
+        [Authorize]
+        public async Task TestTenantUserInfo()
+        {
+            
+            var user = CurrentUser;
+            var tenant = CurrentTenant;
+            var uow = CurrentUnitOfWork;
+            
+        }
     }
 }

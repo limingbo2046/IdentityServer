@@ -9,5 +9,6 @@ namespace Lcn.IdentityServer.UserAuths
     {
         Task<string> UserTokenAsync(UserTokenDto userTokenDto);
         Task<string> ClientTokenAsync(UserTokenDto userTokenDto);
+        Task TestTenantUserInfo();
     }
 }

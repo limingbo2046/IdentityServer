@@ -15,5 +15,9 @@ namespace Lcn.IdentityServer.UserAuths
         /// 用户能访问的API范围用空格隔开
         /// </summary>
         public string ApiScopes { get; set; }
+        /// <summary>
+        /// 租户
+        /// </summary>
+        public Guid? TenantId { get; set; }
     }
 }

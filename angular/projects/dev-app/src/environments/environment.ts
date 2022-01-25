@@ -6,7 +6,7 @@ export const environment = {
   production: false,
   application: {
     baseUrl: 'http://localhost:4200/',
-    name: 'IdentityServer',
+    name: '认证服务',
     logoUrl: '',
   },
   oAuthConfig: {
