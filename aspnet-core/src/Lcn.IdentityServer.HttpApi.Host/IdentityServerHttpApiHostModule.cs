@@ -28,6 +28,7 @@ using Volo.Abp.Modularity;
 using Volo.Abp.Swashbuckle;
 using Volo.Abp.UI.Navigation.Urls;
 using Volo.Abp.VirtualFileSystem;
+using Volo.Abp.AspNetCore.Mvc.AntiForgery;
 
 namespace Lcn.IdentityServer
 {
@@ -58,8 +59,14 @@ namespace Lcn.IdentityServer
             ConfigureVirtualFileSystem(context);
             ConfigureCors(context, configuration);
             ConfigureSwaggerServices(context, configuration);
+            ConfigureAntiForgery();
         }
-
+        private void ConfigureAntiForgery()
+        {
+            Configure<AbpAntiForgeryOptions>(options => {
+                options.AutoValidate = false;
+            });
+        }
         private void ConfigureBundles()
         {
             Configure<AbpBundlingOptions>(options =>
