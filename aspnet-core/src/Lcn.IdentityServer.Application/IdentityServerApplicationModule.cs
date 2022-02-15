@@ -1,5 +1,7 @@
-﻿using Volo.Abp.Account;
+﻿using Volo.Abp;
+using Volo.Abp.Account;
 using Volo.Abp.AutoMapper;
+using Volo.Abp.BackgroundWorkers;
 using Volo.Abp.FeatureManagement;
 using Volo.Abp.Identity;
 using Volo.Abp.Modularity;
@@ -20,6 +22,7 @@ namespace Lcn.IdentityServer
         typeof(AbpSettingManagementApplicationModule)
         )]
     [DependsOn(typeof(lcn.menu_management.menu_managementApplicationModule))]
+    [DependsOn(typeof(AbpBackgroundWorkersModule))]
     public class IdentityServerApplicationModule : AbpModule
     {
         public override void ConfigureServices(ServiceConfigurationContext context)
@@ -28,6 +31,10 @@ namespace Lcn.IdentityServer
             {
                 options.AddMaps<IdentityServerApplicationModule>();
             });
+        }
+        public override void OnApplicationInitialization(ApplicationInitializationContext context)
+        {
+            context.AddBackgroundWorker<KeepLiveWorker>();//添加后台工作者
         }
     }
 }

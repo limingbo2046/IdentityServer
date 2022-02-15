@@ -10,6 +10,8 @@ using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Identity;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
+using Volo.Abp.MultiTenancy;
+using Volo.Abp.Users;
 
 namespace Lcn.IdentityServer.UserAuths
 {
@@ -105,32 +107,34 @@ namespace Lcn.IdentityServer.UserAuths
 
         private async Task<IdentityUser> CheckUserNameAsync(UserTokenDto userToken)
         {
-            IdentityUser user = null;
-            if (!userToken.UserName.Contains("@"))//非邮件的方式
+            using (CurrentTenant.Change(userToken.TenantId))
             {
-                user = await _userManager.FindByNameAsync(userToken.UserName);
+                IdentityUser user = null;
+                if (!userToken.UserName.Contains("@"))//非邮件的方式
+                {
+                    user = await _userManager.FindByNameAsync(userToken.UserName);
+                    if (user == null)
+                    {
+                        var newUserName = userToken.UserName.PadLeft(6, '0');//填充工号的0
+                        user = await _userManager.FindByNameAsync(newUserName);//
+                    }
+                }
+                else
+                {
+                    user = await _userManager.FindByEmailAsync(userToken.UserName);
+                    if (user == null)
+                    {
+                        var newUserName = userToken.UserName.PadLeft(6, '0');//填充工号的0
+                        user = await _userManager.FindByEmailAsync(newUserName);//
+                    }
+                }
                 if (user == null)
                 {
-                    var newUserName = userToken.UserName.PadLeft(6, '0');//填充工号的0
-                    user = await _userManager.FindByNameAsync(newUserName);//
+                    throw new UserFriendlyException($"找不到该账号{userToken.UserName}！");
                 }
-            }
-            else
-            {
-                user = await _userManager.FindByEmailAsync(userToken.UserName);
-                if (user == null)
-                {
-                    var newUserName = userToken.UserName.PadLeft(6, '0');//填充工号的0
-                    user = await _userManager.FindByEmailAsync(newUserName);//
-                }
-            }
-            if (user == null)
-            {
-                throw new UserFriendlyException($"找不到该账号{userToken.UserName}！");
-            }
 
-            return user;
-
+                return user;
+            }
         }
 
         protected async Task<string> RequestTokenAsync(string username, string password, string apiScope, Guid? tenantId)
@@ -249,8 +253,8 @@ namespace Lcn.IdentityServer.UserAuths
             };
 
             var client = new HttpClient(clientHandler);
-            client.BaseAddress = new Uri(authority);
-            client.DefaultRequestHeaders.Add("__tenant", tenantId.HasValue ? tenantId.Value.ToString() : "");//在请求头里面添加租户标识则会区分租户来登录账号，并拿到令牌
+            client.BaseAddress = new Uri(authority);//租户的ID是要小写的
+            client.DefaultRequestHeaders.Add("__tenant", tenantId.HasValue ? tenantId.Value.ToString().ToLower() : "");//在请求头里面添加租户标识则会区分租户来登录账号，并拿到令牌
             if (!string.IsNullOrWhiteSpace(bearer))
             {
                 client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", bearer);
@@ -262,11 +266,20 @@ namespace Lcn.IdentityServer.UserAuths
         [Authorize]
         public async Task TestTenantUserInfo()
         {
-            
+
             var user = CurrentUser;
             var tenant = CurrentTenant;
             var uow = CurrentUnitOfWork;
-            
+
+        }
+
+        public virtual async Task<ProfileDto> GetProfileAsync()
+        {
+            var source = await _userManager.GetByIdAsync(CurrentUser.GetId());
+            var userProfile = ObjectMapper.Map<IdentityUser, ProfileDto>(source);
+            var e_no = source.Claims.FirstOrDefault(p => p.ClaimType == "employe_no");
+            userProfile.EmployeNo = e_no?.ClaimValue;
+            return userProfile;
         }
     }
 }
