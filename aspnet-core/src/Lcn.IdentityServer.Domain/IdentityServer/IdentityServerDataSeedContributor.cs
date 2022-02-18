@@ -18,6 +18,7 @@ using Volo.Abp.Uow;
 using ApiResource = Volo.Abp.IdentityServer.ApiResources.ApiResource;
 using ApiScope = Volo.Abp.IdentityServer.ApiScopes.ApiScope;
 using Client = Volo.Abp.IdentityServer.Clients.Client;
+using IdentityResource = Volo.Abp.IdentityServer.IdentityResources.IdentityResource;
 
 namespace Lcn.IdentityServer.IdentityServer
 {
@@ -31,6 +32,7 @@ namespace Lcn.IdentityServer.IdentityServer
         private readonly IPermissionDataSeeder _permissionDataSeeder;
         private readonly IConfiguration _configuration;
         private readonly ICurrentTenant _currentTenant;
+        private readonly IIdentityResourceRepository _identityResourceRepository;
 
         public IdentityServerDataSeedContributor(
             IClientRepository clientRepository,
@@ -40,7 +42,8 @@ namespace Lcn.IdentityServer.IdentityServer
             IGuidGenerator guidGenerator,
             IPermissionDataSeeder permissionDataSeeder,
             IConfiguration configuration,
-            ICurrentTenant currentTenant)
+            ICurrentTenant currentTenant,
+            IIdentityResourceRepository identityResourceRepository)
         {
             _clientRepository = clientRepository;
             _apiResourceRepository = apiResourceRepository;
@@ -50,6 +53,7 @@ namespace Lcn.IdentityServer.IdentityServer
             _permissionDataSeeder = permissionDataSeeder;
             _configuration = configuration;
             _currentTenant = currentTenant;
+            _identityResourceRepository = identityResourceRepository;
         }
 
         [UnitOfWork]
@@ -96,6 +100,10 @@ namespace Lcn.IdentityServer.IdentityServer
 
                 }
             }
+
+            //添加服务器资源
+            await CreateIdentityResourcesAsync();
+
         }
 
         private async Task CreateApiResourcesAsync(string clientId)
@@ -260,5 +268,42 @@ namespace Lcn.IdentityServer.IdentityServer
 
             return await _clientRepository.UpdateAsync(client);
         }
+
+
+        private async Task CreateIdentityResourceAsync(string name, string[] userClaims, string descName = null)
+        {
+            var identityR = await _identityResourceRepository.FindByNameAsync(name);
+            if (identityR == null)
+            {
+                identityR = await _identityResourceRepository.InsertAsync(new IdentityResource(_guidGenerator.Create(), name,
+                    (string.IsNullOrWhiteSpace(descName) ? name + "卡" : descName)));
+            }
+
+            foreach (var userClaim in userClaims)
+            {
+                if (identityR.FindUserClaim(userClaim) == null)
+                {
+                    identityR.AddUserClaim(userClaim);
+                }
+            }
+        }
+
+        private async Task CreateIdentityResourcesAsync()
+        {
+            await CreateIdentityResourceAsync("card.employee", new[] { "employee_name", "employee_no", "employee_role", "employee_post" }, "员工卡");
+            //该卡的组成属性
+
+            //员工名字
+            //员工工号
+            //员工角色
+            //员工岗位
+
+            // await CreateIdentityResourceAsync("card.outsourcing", new[] { "company_name", "employee_name", "employee_no", "employee_role", "employee_post" }, "外协员工卡");
+
+
+        }
+
+
+
     }
 }

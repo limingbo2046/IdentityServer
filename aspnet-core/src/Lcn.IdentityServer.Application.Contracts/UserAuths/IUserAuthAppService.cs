@@ -11,5 +11,6 @@ namespace Lcn.IdentityServer.UserAuths
         Task<string> ClientTokenAsync(UserTokenDto userTokenDto);
         Task TestTenantUserInfo();
         Task<ProfileDto> GetProfileAsync();
+        Task<string> LoginByCardNo(UserCardDto userCardDto);
     }
 }

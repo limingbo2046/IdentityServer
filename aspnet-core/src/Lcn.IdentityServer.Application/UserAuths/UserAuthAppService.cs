@@ -281,5 +281,50 @@ namespace Lcn.IdentityServer.UserAuths
             userProfile.EmployeNo = e_no?.ClaimValue;
             return userProfile;
         }
+        /// <summary>
+        /// 通过卡号获取访问令牌
+        /// </summary>
+        /// <param name="userCardDto"></param>
+        /// <returns></returns>
+        public async Task<string> LoginByCardNo(UserCardDto userCardDto)
+        {
+            var authServer = Configuration.GetSection("AuthServer");
+            var authority = authServer["Authority"];
+            var client = GetHttpClient(authority, userCardDto.TenantId);
+            var disco = await client.GetDiscoveryDocumentAsync();//请求服务端口https://localhost:9009/.well-known/openid-configuration
+
+            if (disco.IsError)
+            {
+                throw new UserFriendlyException($"刷卡认证发现文档出错！连接不到{authority}/.well-known/openid-configuration,错误信息{disco.Error}");
+            }
+
+            var tokenRequest = new TokenRequest
+            {
+                GrantType = "SwipeCard",
+                Address = disco.TokenEndpoint,//请求令牌节点
+                ClientId = authServer["SwipeCardClientId"],
+                ClientSecret = authServer["SwipeCardClientSecret"],
+                Parameters =
+                {
+                    { "scope",userCardDto.Scopes.IsNullOrWhiteSpace()?authServer["SwipeCardScopes"]:userCardDto.Scopes},
+                    { "card_no", userCardDto.CardNo },
+                   // {"__tenant", userCardDto.TenantId.HasValue ? userCardDto.TenantId.Value.ToString().ToLower() : ""}
+                },
+
+            };
+
+           // tokenRequest.Headers.Add("__tenant", userCardDto.TenantId.HasValue ? userCardDto.TenantId.Value.ToString().ToLower() : "");
+
+            var response = await GetHttpClient(authority, userCardDto.TenantId).RequestTokenAsync(tokenRequest);
+
+            if (response.IsError)
+            {
+                Logger.LogError(response.Error, response.ErrorDescription);
+                throw new UserFriendlyException($"获取令牌客户端认证出错,{response.ErrorDescription}");
+            }
+
+            return response.AccessToken;
+
+        }
     }
 }
